@@ -1,3 +1,5 @@
+![Banner](https://github.com/Germain-Drug-Discovery-Project/drug-discovery-project/blob/main/Drug%20Discovery(1280%20x%20650%20px).png)
+
 <center><h1>Drug Discovery</center>
 
 <a name ='toc'></a>
