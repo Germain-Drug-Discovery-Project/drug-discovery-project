@@ -1,0 +1,3 @@
+#blank .gitignore for project use
+*.csv
+.DS_Store
