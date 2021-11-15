@@ -4,6 +4,7 @@ import numpy as np
 from rdkit import Chem #install library: conda install -c rdkit rdkit
 from rdkit.Chem import Descriptors, Lipinski
 from acquire import query_chembl
+import argparse
 
 
 def bioactivity_class(bioactivity_df):
@@ -73,7 +74,7 @@ def pIC50(bioactivity_df):
 def preprocess_bioactivity_data(TARGET_ID, save=False):
 	'''Return preprocessed dataframe.
 	Args:
-		bioactivity_df: The dataframe returned from querying ChEMBL
+		TARGET_ID: The bumber part of the ChEMBL ID
 		save: Set to True to save dataframe (bool)
 	Returns:
 		df: The preprocessed dataframe.
@@ -97,12 +98,18 @@ def preprocess_bioactivity_data(TARGET_ID, save=False):
 		#save results of query to csv
 		df.to_csv(f'{TARGET_ID}_bioactivity_preprocessed.csv', index=False)
 
-	print("Preprocessed dataframe...\n", df.tail())
+	print('Saving preprocessed dataframe...\n', df.tail(2))
 
 	return df
 
 
 if __name__ == "__main__":
-	#Example query using CHEMBL molecule ID number
-	target_id = 3199 #acetylcholinesterase, Rattus norvegicus
-	preprocess_bioactivity_data(target_id, save=True)
+	#Argparse allows user to specify molcule ID in the terminal.
+	parser = argparse.ArgumentParser(description='Preprocess ChEMBL molecule data.')
+	parser.add_argument('id', metavar='N', type=int, nargs='+',
+                    help='the integer portion of the ChEMBL molecule ID, e.g. 3199')
+	args = parser.parse_args()
+	ids = [getattr(args, a) for a in vars(args)][0]
+
+	for target_id in ids:
+	 	preprocess_bioactivity_data(target_id, save=True)

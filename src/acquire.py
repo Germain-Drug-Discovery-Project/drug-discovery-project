@@ -21,7 +21,7 @@ def query_chembl(TARGET_ID, STANDARD_TYPE = 'IC50', save=False):
 		#save results of query to csv
 		df.to_csv(f'{TARGET_ID}_bioactivity_data.csv', index=False)
 
-	print("Results of query...\n", df.tail())
+	print(f'Query results retrieved for {TARGET_ID}...\n')
 
 	return df
 
