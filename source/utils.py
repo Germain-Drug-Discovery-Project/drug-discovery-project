@@ -107,9 +107,8 @@ def compute_fingerprints(bioactivity_df, output_file):
 					standardizetautomers=True,
 					threads=2, 
 					removesalt=True,
-					log=False,
+					log=True,
 					fingerprints=True)
-
 
 #A hot dog vendor asked a Buddhist monk, "What would you like?"
 #The monk said. "Make me one with everything"
