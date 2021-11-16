@@ -1,3 +1,4 @@
-#blank .gitignore for project use
+#.gitignore for project use
 *.csv
 .DS_Store
+.ipynb_checkpoints/
