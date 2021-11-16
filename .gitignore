@@ -3,6 +3,7 @@
 *.css
 *.csv
 *.smi
+*.log
 
 #
 .DS_Store
