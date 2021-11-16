@@ -1,6 +1,7 @@
 #blank .gitignore for project use
 
 *.css
+*.csv
 *.smi
 
 #
