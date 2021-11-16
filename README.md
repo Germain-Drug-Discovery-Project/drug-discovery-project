@@ -38,7 +38,7 @@
 ### Discovering Drugs
 #### A Chemical Compound Analysis for Fighting Diseases 
 
-> - The project goal is to predict the effectiveness of chemical compounds for treating a disease. This prediction can be used to pre-screen drugs before expensive and time-consuming lab experiments. This is especially important considering that, on average, only 9% drugs get approved by the FDA per year and the cost of bringing a new drug to market is estimated to be $ 2.6 billion, much of which is spent on testing drugs that may have little to no effectivity.
+This projects goal is to predict the effectiveness of chemical compounds for treating a disease. This prediction can be used to pre-screen drugs before expensive and time-consuming lab experiments. This is especially important considering that, on average, only 9% drugs get approved by the FDA per year and the cost of bringing a new drug to market is estimated to be $ 2.6 billion, much of which is spent on testing drugs that may have little to no effectivity.
 
 <hr style="border-top: 10px groove tan; margin-top: 5px; margin-bottom: 5px"></hr>
 
