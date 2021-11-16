@@ -101,7 +101,7 @@ def compute_fingerprints(bioactivity_df, output_file):
 	#XML file available at github.com/dataprofessor/bioinformatics
 	padeldescriptor(mol_dir='molecule.smi',
 					d_file=output_file,
-					descriptortypes='src/PubChemFingerPrinter.xml',
+					descriptortypes='source/PubChemFingerPrinter.xml',
 					detectaromaticity=True, 
 					standardizenitro=True, 
 					standardizetautomers=True,
