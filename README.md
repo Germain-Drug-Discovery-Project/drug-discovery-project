@@ -46,7 +46,16 @@ This projects goal is to predict the effectiveness of chemical compounds for tre
 ## Project Planning
 ✓ 🟢 **Plan** ➜ ☐ _Acquire_ ➜ ☐ _Prepare_ ➜ ☐ _Explore_ ➜ ☐ _Model_ ➜ ☐ _Deliver_
 
-> -
+- [x] Create README.md with data dictionary, project and business goals.
+- [x] Acquire data from ChEMBL and create a series of functions to automate this process. Save the functions in an acquire.py file located in the source folder to import into the Final Report Notebook.
+- [x] Clean and prepare data for the first iteration through the pipeline, MVP preparation. Create a series of functions to automate the process, store the functions in a prepare.py module held in the source folder, and prepare data in Final Report Notebook by importing and using the funtions.
+- [x] Establish a baseline accuracy and document.
+- [x] Train multiple different regression models on train dataset using Classes.
+- [x] Train multiple different classification models on train dataset using Classes.
+- [x] Train an ANN model on train dataset.
+- [x] Evaluate models on test dataset.
+- [x] Document conclusions, takeaways, and next steps in the Final Report Notebook.
+- [x] All steps are detailed in: [Trello](https://trello.com/b/IGNcnEfy/drug-discovery)
 
 <a name='project_objectives'></a>
 ### Project Objectives
