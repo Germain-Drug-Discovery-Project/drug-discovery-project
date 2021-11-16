@@ -56,11 +56,13 @@ class Regression_model():
             return X_train, X_test, y_train, y_test
     
 
-    def scaling(self, scaler = MinMaxScaler()):
+    #def scaling(self, scaler = MinMaxScaler()):
 
     
-    def metrics(self, metric_type = 'accuracy', splits = 10, scaled = False, scaler_type = None, grid_search = True):
-        ''' Checks for scaled flag, if False, scales data using scaler of users choice defined in scaler_type. (Read warning)
+    def metrics(self, metric_type = 'accuracy', splits = 10, scaled = False, scaler_type = None,
+                grid_search = True):
+            ''' Checks for scaled flag, if False, scales data using scaler of users choice defined in 
+            scaler_type. (Read warning)
             Creates a metrics df measuring metric_type, accuracy by default.
             Preforms a kfold a number of times determined by splits, default 10.
 
@@ -68,13 +70,13 @@ class Regression_model():
             Arguments:
             metric_type: Default is R-Squared, can be RMSE, MSE, and SSE
 
-            WARNING: If scaler type is defined but scaled is True, will not scale data a second time. If scaled is False
-            but no scaler_type defined, will use default scaler_type MinMaxScaler
-        '''
+            WARNING: If scaler type is defined but scaled is True, will not scale data a second time. If 
+            scaled is False
+            but no scaler_type defined, will use default scaler_type MinMaxScaler'''
         try: # checking if label exists, if not raise KeyError, didnt specify a lang or top_langs
             self.df['label']
-        except KeyError:
-            return KeyError('Must specify language target in class to create models')
+            except KeyError:
+                return KeyError('Must specify language target in class to create models')
         
         try: # Checking if vectorization has already run, if yes there will be an attribute vectorized df
             self.vectorized
@@ -144,5 +146,6 @@ class Regression_model():
         for tup in estimator_scores:
             if tup[1] == max(maxs):
                 mdl = (tup[0])
-                print(f'Best model: {tup[0]}\nValidate score: {round(tup[1], 4) *100}%\nTest Score: {round(mdl.score(self.X_test, self.y_test), 3) *100}%')
+                    print(f'Best model: {tup[0]}\nValidate score: {round(tup[1], 4) *100}%\nTest Score
+                   {round(mdl.score(self.X_test, self.y_test), 3) *100}%')
                 return mdl

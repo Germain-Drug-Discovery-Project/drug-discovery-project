@@ -35,7 +35,8 @@
 ✓ 🧪 **Context** ➜ ☐ _Plan_ ➜ ☐ _Acquire_ ➜ ☐ _Prepare_ ➜ ☐ _Explore_ ➜ ☐ _Model_ ➜ ☐ _Deliver_
 
 <a name='drug_disc'></a>
-### Drug Discovery
+### Discovering Drugs
+#### A Chemical Compound Analysis for Fighting Diseases 
 
 <hr style="border-top: 10px groove tan; margin-top: 5px; margin-bottom: 5px"></hr>
 
