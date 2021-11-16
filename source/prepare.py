@@ -1,14 +1,15 @@
 
 import pandas as pd
 import numpy as np
+import re
 import argparse
 
 try:
     from acquire import query_chembl
     from utils import *
 except:
-    from src.acquire import query_chembl
-    from src.utils import *
+    from source.acquire import query_chembl
+    from source.utils import *
 
 
 def prepare_dataframe(bioactivity_df):
@@ -48,12 +49,12 @@ def preprocess_bioactivity_data(TARGET_ID, tests=False, fingerprints=True):
 		print("\nMann-Whitney U tests for molecular descriptors (active vs. inactive)...")
 		for column in ['MW', 'LogP', 'NumHDonors', 'NumHAcceptors']:
 			mannwhitney(column, df)
-
-	print(f'\nComputing fingerprints (takes several minutes if molecules > 1000)...')
-	#save PubChem fingerprint results to csv
-	output_file = f'{TARGET_ID}_pubchem_fp.csv'
-	compute_fingerprints(df, output_file)
-	print("Success!\n")
+	if fingerprints:
+		print(f'\nComputing fingerprints (takes several minutes if molecules > 1000)...')
+		#save PubChem fingerprint results to csv
+		output_file = f'{TARGET_ID}_pubchem_fp.csv'
+		compute_fingerprints(df, output_file)
+		print("Success!\n")
 
 
 if __name__ == "__main__":

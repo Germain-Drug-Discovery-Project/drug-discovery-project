@@ -1,4 +1,4 @@
-![Banner](https://github.com/Germain-Drug-Discovery-Project/drug-discovery-project/blob/main/Drug%20Discovery(1280%20x%20650%20px).png)
+![Banner](images/banner.png)
 
 <center><h1>Drug Discovery</center>
 

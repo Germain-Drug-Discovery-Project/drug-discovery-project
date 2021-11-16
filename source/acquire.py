@@ -14,9 +14,9 @@ def query_chembl(TARGET_ID, STANDARD_TYPE = 'IC50', save=False):
 		Results of query (df)
 	'''
 
-	result = new_client.activity.filter(target_chembl_id="CHEMBL"+str(TARGET_ID))\
+	result = new_client.activity.filter(target_chembl_id=TARGET_ID)\
 								.filter(standard_type=STANDARD_TYPE)
-	df = pd.DataFrame(result)#.dropna(subset=["value"])
+	df = pd.DataFrame(result)
 
 	if save:
 		#save results of query to csv

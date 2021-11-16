@@ -1,3 +1,9 @@
 #blank .gitignore for project use
-*.csv
+
+*.css
+*.smi
+
+#
 .DS_Store
+.ipynb_checkpoints
+__pycache__/

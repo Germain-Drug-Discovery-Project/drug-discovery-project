@@ -63,7 +63,7 @@ def pIC50(bioactivity_df):
 	for ic in bioactivity_df.standard_value:
 		ic = min(ic, 1e8) #caps values
 		molar = ic * 1e-9 #converts nanomolar to molar
-		value = round(-np.log10(molar), 2) #uses 3 significant digits
+		value = round(-np.log10(molar), 7) #uses 8 significant digits
 		pIC50.append(value)
 	
 	bioactivity_df['pIC50'] = pIC50
@@ -101,7 +101,7 @@ def compute_fingerprints(bioactivity_df, output_file):
 	#XML file available at github.com/dataprofessor/bioinformatics
 	padeldescriptor(mol_dir='molecule.smi',
 					d_file=output_file,
-					descriptortypes='pubchem.xml',
+					descriptortypes='src/PubChemFingerPrinter.xml',
 					detectaromaticity=True, 
 					standardizenitro=True, 
 					standardizetautomers=True,
