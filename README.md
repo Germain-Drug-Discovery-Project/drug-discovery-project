@@ -5,7 +5,7 @@
 <a name ='toc'></a>
 # Table of Contents 
 0. [Domain Context](#domain_context)
-    1. [Drug Discovery](#drug_disc)
+    1. [ Discovering Drugs](#drug_disc)
 1. [Project Planning](#project_planning)
     1. [Project Objectives](#project_objectives)
     2. [Audience](#audience)
