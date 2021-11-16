@@ -1,86 +1,19 @@
 
 import pandas as pd
 import numpy as np
-from rdkit import Chem #install library: conda install -c rdkit rdkit
-from rdkit.Chem import Descriptors, Lipinski
-from acquire import query_chembl
 import argparse
 
+try:
+    from acquire import query_chembl
+    from utils import *
+except:
+    from src.acquire import query_chembl
+    from src.utils import *
 
-def bioactivity_class(bioactivity_df):
-	'''Divide compounds into potency classes.
-	Args:
-		bioactivity_df: The dataframe returned from querying ChEMBL
-	Returns:
-		bioactivity_df: The dataframe with added potency class column
+
+def prepare_dataframe(bioactivity_df):
+	'''Add Lapinski descriptors and pIC50, drop intermediate class.
 	'''
-
-	class_names = []
-
-	for i in bioactivity_df.standard_value:
-		if i >= 10000:
-			class_names.append('INACTIVE')
-		elif i <= 1000:
-			class_names.append('ACTIVE')
-		else:
-			class_names.append('intermediate')
-
-	bioactivity_df['bioactivity_class'] = class_names
-
-	return bioactivity_df
-
-
-def lipinski(smiles):
-	'''Using SMILES notation, returns the four parameters described by
-	Lipinski's Rule of Five in dataframe.
-	Args:
-		smiles: canonical_smiles column with molecular structure (ser)
-	Returns:
-		descriptors: dataframe with Lipinski descriptors
-	'''
-
-	moldata = [Chem.MolFromSmiles(elem) for elem in smiles]
-	descriptors = pd.DataFrame(data=np.zeros((len(moldata), 4)),
-  					columns=['MW', 'LogP', 'NumHDonors', 'NumHAcceptors'])
-
-	for ix, mol in enumerate(moldata):
-		descriptors.loc[ix] = [Descriptors.MolWt(mol),Descriptors.MolLogP(mol),
-  							Lipinski.NumHDonors(mol), Lipinski.NumHAcceptors(mol)]
-	
-	return descriptors
-
-
-def pIC50(bioactivity_df):
-	'''Convert IC50 to pIC50 scale and capping input at 100M,
-	which would give negative values after negative logarithm.
-	Args:
-		smiles: canonical_smiles column with molecular structure (ser)
-	Returns:
-		bioactivity_df: The dataframe with added pIC50 class column
-	'''
-
-	pIC50 = []
-
-	for ic in bioactivity_df.standard_value:
-		ic = min(ic, 1e8) #caps values
-		molar = ic * 1e-9 #converts nanomolar to molar
-		pIC50.append(round(-np.log10(molar), 2)) #uses 3 significant digits
-	
-	bioactivity_df['pIC50'] = pIC50
-
-	return bioactivity_df
-
-
-def preprocess_bioactivity_data(TARGET_ID, save=False):
-	'''Return preprocessed dataframe.
-	Args:
-		TARGET_ID: The bumber part of the ChEMBL ID
-		save: Set to True to save dataframe (bool)
-	Returns:
-		df: The preprocessed dataframe.
-	'''
-	#Acquire data
-	bioactivity_df = query_chembl(target_id)
 	#Subset data
 	subset = ['molecule_chembl_id', 'canonical_smiles', 'standard_value']
 	df = bioactivity_df.copy()[subset]
@@ -91,20 +24,41 @@ def preprocess_bioactivity_data(TARGET_ID, save=False):
 	df = pIC50(df) #add column
 	#Subtract
 	df = df[df.bioactivity_class != 'intermediate'] #drop middle class
-	#take assay with highest potency if multiple assays exist
-	df = df.groupby('molecule_chembl_id').min()
-
-	if save:
-		#save results of query to csv
-		df.to_csv(f'{TARGET_ID}_bioactivity_preprocessed.csv', index=False)
-
-	print('Saving preprocessed dataframe...\n', df.tail(2))
 
 	return df
 
 
+def preprocess_bioactivity_data(TARGET_ID, tests=False, fingerprints=True):
+	'''Queries database and uutputs two csv files to data folder:
+	   a preprocessed dataframe and molecular fingerprints
+	Args:
+		TARGET_ID: The number part of the ChEMBL ID
+		test: Set to True to show U test results (bool)
+		fingerprints: Set to True to ouput fingerprints (bool)
+	'''
+	#Acquire data
+	bioactivity_df = query_chembl(TARGET_ID)
+	df = prepare_dataframe(bioactivity_df)
+	
+	print(f'Saving {len(df)} molecules.')
+	#save results of query to csv
+	df.to_csv(f'{TARGET_ID}_bioactivity_preprocessed.csv', index=False)
+
+	if tests:
+		print("\nMann-Whitney U tests for molecular descriptors (active vs. inactive)...")
+		for column in ['MW', 'LogP', 'NumHDonors', 'NumHAcceptors']:
+			mannwhitney(column, df)
+
+	print(f'\nComputing fingerprints (takes several minutes if molecules > 1000)...')
+	#save PubChem fingerprint results to csv
+	output_file = f'{TARGET_ID}_pubchem_fp.csv'
+	compute_fingerprints(df, output_file)
+	print("Success!\n")
+
+
 if __name__ == "__main__":
-	#Argparse allows user to specify molcule ID in the terminal.
+
+	#User should specify molecule ID(s) after filename
 	parser = argparse.ArgumentParser(description='Preprocess ChEMBL molecule data.')
 	parser.add_argument('id', metavar='N', type=int, nargs='+',
                     help='the integer portion of the ChEMBL molecule ID, e.g. 3199')
@@ -112,4 +66,4 @@ if __name__ == "__main__":
 	ids = [getattr(args, a) for a in vars(args)][0]
 
 	for target_id in ids:
-	 	preprocess_bioactivity_data(target_id, save=True)
+	 	preprocess_bioactivity_data(target_id, tests=False, fingerprints=True)
