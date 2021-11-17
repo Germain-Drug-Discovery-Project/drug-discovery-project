@@ -4,6 +4,7 @@
 *.csv
 *.smi
 *.log
+*.jar
 
 #
 .DS_Store
