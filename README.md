@@ -162,19 +162,27 @@ This projects goal is to predict the effectiveness of chemical compounds for tre
 
 #### Hypothesis 1
 > - (H0)There is no significant difference in the distibution of Molecular Weight between active and inactive chemical compounds?
+    
     - U statistic = 0, p = 0.013
+    
     - There is a different distribution. We can reject H0.
 #### Hypothesis 2
 > - (H0)There is no significant difference in the distibution of LogP between active and inactive chemical compounds?
+    
     - U statistic = 6, p = 0.256
+    
     - They have the same distribution. We fail to reject H0.
 #### Hypothesis 3
 > - (H0)There is no significant difference in the distibution of the number of hydrogen donors between active and inactive chemical compounds?
+    
     - U statistic = 0, p = 0.010
+    
     - There is a different distribution. We can reject H0.
 #### Hypothesis 4
 > - (H0)There is no significant difference in the distibution of the number of hydrogen acceptors between active and inactive chemical compounds?
+    
     - U statistic = 8, p = 0.319
+    
     - They have the same distribution. We fail to reject H0.
 
 <a name='modeling'></a>
