@@ -29,15 +29,15 @@ def bioactivity_class(bioactivity_df):
 	return bioactivity_df
 
 
-def lipinski(smiles):
+def lipinski(bioactivity_df):
 	'''Using SMILES notation, returns the four parameters described by
 	Lipinski's Rule of Five in dataframe.
 	Args:
-		smiles: canonical_smiles column with molecular structure (ser)
+		bioactivity_df: The dataframe returned from querying ChEMBL
 	Returns:
-		descriptors: dataframe with Lipinski descriptors
+		bioactivity_df: The dataframe with added Lipinski descriptors
 	'''
-
+	smiles = bioactivity_df.canonical_smiles
 	moldata = [Chem.MolFromSmiles(elem) for elem in smiles]
 	descriptors = pd.DataFrame(data=np.zeros((len(moldata), 4)),
   					columns=['MW', 'LogP', 'NumHDonors', 'NumHAcceptors'])
@@ -45,8 +45,10 @@ def lipinski(smiles):
 	for ix, mol in enumerate(moldata):
 		descriptors.loc[ix] = [Descriptors.MolWt(mol),Descriptors.MolLogP(mol),
   							Lipinski.NumHDonors(mol), Lipinski.NumHAcceptors(mol)]
-	
-	return descriptors
+
+	bioactivity_df = pd.concat([bioactivity_df, descriptors], axis=1)
+
+	return bioactivity_df
 
 
 def pIC50(bioactivity_df):
@@ -63,7 +65,7 @@ def pIC50(bioactivity_df):
 	for ic in bioactivity_df.standard_value:
 		ic = min(ic, 1e8) #caps values
 		molar = ic * 1e-9 #converts nanomolar to molar
-		value = round(-np.log10(molar), 7) #uses 8 significant digits
+		value = round(-np.log10(molar), 5) #uses 6 significant digits
 		pIC50.append(value)
 	
 	bioactivity_df['pIC50'] = pIC50
@@ -88,7 +90,7 @@ def mannwhitney(y, df, alpha=.05):
 	else: print('   Different distribution. Reject H0.')
 
 
-def compute_fingerprints(bioactivity_df, output_file):
+def compute_fingerprints(bioactivity_df, output_file, fp='PubchemFingerprinter'):
 	'''Computes and outputs binary substructure fingerprint.
 	Args:
 		bioactivity_df: Dataframe containing SMILES notation
@@ -98,10 +100,12 @@ def compute_fingerprints(bioactivity_df, output_file):
 	df_selection = bioactivity_df[['canonical_smiles','molecule_chembl_id']]
 	df_selection.to_csv('molecule.smi', sep='\t', index=False, header=False)
 
-	#XML file available at github.com/dataprofessor/bioinformatics
+	#XML PaDEL files available at github.com/dataprofessor/bioinformatics
+	#path to fingerprinter
+	descriptortype = f'source/padel_descriptor/{fp}.xml'
 	padeldescriptor(mol_dir='molecule.smi',
 					d_file=output_file,
-					descriptortypes='source/PubChemFingerPrinter.xml',
+					descriptortypes=descriptortype,
 					detectaromaticity=True, 
 					standardizenitro=True, 
 					standardizetautomers=True,
@@ -109,6 +113,7 @@ def compute_fingerprints(bioactivity_df, output_file):
 					removesalt=True,
 					log=True,
 					fingerprints=True)
+
 
 #A hot dog vendor asked a Buddhist monk, "What would you like?"
 #The monk said. "Make me one with everything"

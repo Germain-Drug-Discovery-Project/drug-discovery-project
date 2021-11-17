@@ -16,7 +16,8 @@ def query_chembl(TARGET_ID, STANDARD_TYPE = 'IC50', save=False):
 
 	result = new_client.activity.filter(target_chembl_id=TARGET_ID)\
 								.filter(standard_type=STANDARD_TYPE)
-	df = pd.DataFrame(result)
+	#drop row if IC50 is missing
+	df = pd.DataFrame(result).dropna(subset=['value']).reset_index(drop=True)
 
 	if save:
 		#save results of query to csv
@@ -29,5 +30,5 @@ def query_chembl(TARGET_ID, STANDARD_TYPE = 'IC50', save=False):
 
 if __name__ == "__main__":
 	#Example query using CHEMBL molecule ID number
-	target_id = 3199 #acetylcholinesterase, Rattus norvegicus
+	target_id = 'CHEMBL3199' #acetylcholinesterase, Rattus norvegicus
 	df = query_chembl(target_id)
