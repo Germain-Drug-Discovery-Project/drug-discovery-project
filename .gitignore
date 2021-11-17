@@ -1,6 +1,10 @@
+<<<<<<< HEAD
+#.gitignore for project use
+=======
 #blank .gitignore for project use
 
 *.css
+>>>>>>> 37f94b7a3e98c39792d8662e15adc32df71c44c6
 *.csv
 *.smi
 *.log
@@ -8,5 +12,9 @@
 
 #
 .DS_Store
+<<<<<<< HEAD
+.ipynb_checkpoints/
+=======
 .ipynb_checkpoints
 __pycache__/
+>>>>>>> 37f94b7a3e98c39792d8662e15adc32df71c44c6

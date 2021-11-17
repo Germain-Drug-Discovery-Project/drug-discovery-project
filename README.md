@@ -100,13 +100,26 @@ This projects goal is to predict the effectiveness of chemical compounds for tre
 ## Acquire Data
 ✓ _Plan_ ➜ 🟢 **Acquire** ➜ ☐ _Prepare_ ➜ ☐ _Explore_ ➜ ☐ _Model_ ➜ ☐ _Deliver_
 
-> -
+> Data was acquired using the ChEMBL websource client. ChEMBL is a manually curated database of bioactive molecules with drug-like properties. It brings together chemical, bioactivity and genomic data to aid the translation of genomic information into effective new drugs.
+- [x] pip install chembl_webresource_client that gets data from ChEMBL server
+- [x] pip instal rdkit an open source cheminformatics library that helps us get vital information from each chemical coumpound
+- [x] search for the target in our search function. Returns all ChEMBL entries for target
+    
 
 <a name='data_dict'></a>
 ### DataFrame Dict
 
-| Feature           | Datatype                         | Definition                                                 |
-|:------------------|:---------------------------------|:-----------------------------------------------------------|
+| Feature            | Datatype             | Definition   |
+|:-------------------|:---------------------|:-------------|
+| molecule_chembl_id | 12 non-null: object  |Unique ChEMBL identifier for each chemical compound|
+| canonical_smiles   | 12 non-null: object  |A string to represent a 2D molecular graph as a 1D string|
+| standard_value     | 12 non-null: float64 |              |
+| bioactivity_class  | 12 non-null: object  |The activity classificaction of the chemical compound in camparison to the target. (Active, Inactive, Intermediate) |
+| MW                 | 12 non-null: float64 |The molecular weight of the chemical compound|
+| LogP               | 12 non-null: float64 |Solubility or Permiability of the chemical compound. The lower the number the more solubale it is in water. The higher it is the more permiable it is in fat|
+| NumHDonors         | 12 non-null: float64 |Number of hydrogen donors the chemical compound has|
+| NumHAcceptors      | 12 non-null: float64 |Number of hydrogen acceptors the chemical compound has|
+| pIC50              | 12 non-null: float64 |**TARGET** Inverse log of IC50 converted to molar. IC50 is the most widely used and informative measure of a drug's efficacy. It indicates how much drug is needed to inhibit a biological process by half, thus providing a measure of potency of an antagonist drug in pharmacological research.|
 
 <a name='acquire_takeaways'></a>
 ### Takeaways from Acquire:
@@ -119,8 +132,10 @@ This projects goal is to predict the effectiveness of chemical compounds for tre
 ## Prepare Data
 ✓ _Plan_ ➜ ✓ _Acquire_ ➜ 🟢 **Prepare** ➜ ☐ _Explore_ ➜ ☐ _Model_ ➜ ☐ _Deliver_
 
-> -
-
+> - The acquire and preparation of the data had to be automized by the use of scripts for ease of use and readability. The data acquired from ChEMBL needed the lipinski rules (Molecular weight, LogP, H donors, H acceptors, and pIC50) applied. The chemical fingerprint was then created using the canocial smile.The chemical fingerprint is a unique pattern indicating the presence of a particular molecule, based on specialized analytic techniques such as mass- or x-ray-spectroscopy, used to identify a pollutant, drug, contaminant, or other chemical in a test sample. ChEMBL is a manualy currated list of chemical compounds, because of this most conventional cleaning steps are not needed because the problems are not present. 
+- [x] Apply Lipinski's  Rules to the acquired data
+- [x] Create a dataframe containg the chemical fingerprints of each chemmical compound
+- [x] 
 <a name='prepare_takeaways'></a>
 ### Prepare Takeaways
 > - The data was cleaned and is ready for exploration on the train data set.
@@ -143,18 +158,32 @@ This projects goal is to predict the effectiveness of chemical compounds for tre
 
 <a name='hypothesis'></a>
 ### Hypothesis Testing
+> - Mann-Whitney U tests for molecular descriptors (active vs. inactive).
 
 #### Hypothesis 1
-> -
-
+> - (H0)There is no significant difference in the distibution of Molecular Weight between active and inactive chemical compounds?
+    
+    - U statistic = 0, p = 0.013
+    
+    - There is a different distribution. We can reject H0.
 #### Hypothesis 2
-> -
-
+> - (H0)There is no significant difference in the distibution of LogP between active and inactive chemical compounds?
+    
+    - U statistic = 6, p = 0.256
+    
+    - They have the same distribution. We fail to reject H0.
 #### Hypothesis 3
-> - 
-
+> - (H0)There is no significant difference in the distibution of the number of hydrogen donors between active and inactive chemical compounds?
+    
+    - U statistic = 0, p = 0.010
+    
+    - There is a different distribution. We can reject H0.
 #### Hypothesis 4
-> -
+> - (H0)There is no significant difference in the distibution of the number of hydrogen acceptors between active and inactive chemical compounds?
+    
+    - U statistic = 8, p = 0.319
+    
+    - They have the same distribution. We fail to reject H0.
 
 <a name='modeling'></a>
 ## Modeling & Evaluation
