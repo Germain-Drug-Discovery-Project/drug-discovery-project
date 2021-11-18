@@ -22,7 +22,7 @@ def bioactivity_class(bioactivity_df):
 		elif i <= 1000:
 			class_names.append('ACTIVE')
 		else:
-			class_names.append('intermediate')
+			class_names.append('INTERMEDIATE')
 
 	bioactivity_df['bioactivity_class'] = class_names
 
@@ -71,7 +71,7 @@ def pIC50(bioactivity_df):
 	return bioactivity_df
 
 
-def mannwhitney(y, df, alpha=.05):
+def kruskal_wallace(y, df, alpha=.05):
 	'''Compare and interpret the active vs. inactive samples
 	   using a Mann-Whitney U test.
 	   Args:
@@ -81,9 +81,10 @@ def mannwhitney(y, df, alpha=.05):
 	'''
 	print("\n", y)
 	active = df[df.bioactivity_class=='ACTIVE'][y]
+	intermediate = df[df.bioactivity_class=='INTERMEDIATE'][y]
 	inactive = df[df.bioactivity_class=='INACTIVE'][y]
-	stat, p = scs.mannwhitneyu(active, inactive)
-	print('   U statistic = %.0f, p = %.3f' %(stat, p))
+	h, p = scs.kruskal(active, intermediate, inactive)
+	print('   H statistic = %.0f, p = %.3f' %(h, p))
 	if p > alpha: print('   Same distribution. Fail to reject H0.')
 	else: print('   Different distribution. Reject H0.')
 
