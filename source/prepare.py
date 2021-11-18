@@ -1,7 +1,6 @@
 
 import pandas as pd
 import numpy as np
-import re
 import argparse
 
 try:
@@ -21,21 +20,23 @@ def prepare_dataframe(bioactivity_df):
 	df.standard_value = df.standard_value.astype('float64')
 	#Add
 	df = bioactivity_class(df) #add column
-	df = pd.concat([df, lipinski(df.canonical_smiles)], axis=1) #add descriptors
+	df = lipinski(df) #add descriptors
 	df = pIC50(df) #add column
-	#Subtract
-	df = df[df.bioactivity_class != 'intermediate'] #drop middle class
+	#commented out because these examples are useful for linear modeling
+	#df = df[df.bioactivity_class != 'intermediate'] #drop middle class
 
 	return df
 
 
-def preprocess_bioactivity_data(TARGET_ID, tests=False, fingerprints=True):
-	'''Queries database and uutputs two csv files to data folder:
+def preprocess_bioactivity_data(TARGET_ID, fingerprints=True,
+								fp="PubchemFingerprinter", tests=False):
+	'''Queries database and outputs two csv files to data folder:
 	   a preprocessed dataframe and molecular fingerprints
 	Args:
 		TARGET_ID: The number part of the ChEMBL ID
+		fingerprints: Set to True to output fingerprints (bool)
+		descriptor: Index of descriptor type, defaults to Pubchem (int)
 		test: Set to True to show U test results (bool)
-		fingerprints: Set to True to ouput fingerprints (bool)
 	'''
 	#Acquire data
 	bioactivity_df = query_chembl(TARGET_ID)
@@ -49,11 +50,12 @@ def preprocess_bioactivity_data(TARGET_ID, tests=False, fingerprints=True):
 		print("\nMann-Whitney U tests for molecular descriptors (active vs. inactive)...")
 		for column in ['MW', 'LogP', 'NumHDonors', 'NumHAcceptors']:
 			mannwhitney(column, df)
+
 	if fingerprints:
 		print(f'\nComputing fingerprints (takes several minutes if molecules > 1000)...')
 		#save PubChem fingerprint results to csv
-		output_file = f'{TARGET_ID}_pubchem_fp.csv'
-		compute_fingerprints(df, output_file)
+		output_file = f'{TARGET_ID}_chemfingerprint.csv'
+		compute_fingerprints(df, output_file, fp)
 		print("Success!\n")
 
 
@@ -62,7 +64,7 @@ if __name__ == "__main__":
 	#User should specify molecule ID(s) after filename
 	parser = argparse.ArgumentParser(description='Preprocess ChEMBL molecule data.')
 	parser.add_argument('id', metavar='N', type=int, nargs='+',
-                    help='the integer portion of the ChEMBL molecule ID, e.g. 3199')
+                    help='the ChEMBL molecule ID, e.g. CHEMBL3199')
 	args = parser.parse_args()
 	ids = [getattr(args, a) for a in vars(args)][0]
 
