@@ -46,9 +46,7 @@ def lipinski(bioactivity_df):
 		descriptors.loc[ix] = [Descriptors.MolWt(mol),Descriptors.MolLogP(mol),
   							Lipinski.NumHDonors(mol), Lipinski.NumHAcceptors(mol)]
 
-	bioactivity_df = pd.concat([bioactivity_df, descriptors], axis=1)
-
-	return bioactivity_df
+	return descriptors
 
 
 def pIC50(bioactivity_df):

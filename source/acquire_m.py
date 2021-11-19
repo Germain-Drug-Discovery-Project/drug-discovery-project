@@ -82,7 +82,7 @@ class wrangle():
         #Add
         df = bioactivity_class(df) #add column
         df = df.reset_index(drop=True)
-        df = pd.concat([df, lipinski(df.canonical_smiles)], axis=1) #add descriptors
+        df = pd.concat([df, lipinski(df)], axis=1) #add descriptors
         
         df = pIC50(df) #add column
 
