@@ -6,10 +6,15 @@ from sklearn.feature_selection import VarianceThreshold
 from sklearn.dummy import DummyRegressor
 from sklearn.model_selection import KFold, cross_validate
 
+from math import sqrt
 import statistics as st
+from sklearn.metrics import mean_squared_error
+
+import itertools
 
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import warnings
 warnings.simplefilter('ignore')
 pd.set_option('display.float_format', lambda x: f'{x:,.3f}')
@@ -25,19 +30,20 @@ def premodeling_processing(bac_df: pd.DataFrame, fp_df: pd.DataFrame) -> pd.Data
         both bioactivity_class and pIC50.
     '''
     # Merge bioactivity df and fingerprint df on name/molecule_chembl_id
-    df = fp_df.merge(bac_df, right_on='molecule_chembl_id', left_on='Name')
+    df = fp_df.merge(bac_df, right_on='molecule_chembl_id', left_on='Name').dropna()
     
     # Init empty list to fill with unique bioactivity class ids
     bac = []
     for cls in df.bioactivity_class.unique(): # gets unique class ids
         bac.append(cls) # appends to bioactivity list
     
+    raw_bac = df.bioactivity_class.copy()
     # Encoding bioactivity class ID into
     for i, c in enumerate(bac): # could have anywhere between 1 and 3 bioactivity classes so enumerate counts the number in bac
-        df.bioactivity_class.replace([c], [i], inplace = True)
+        df['bioactivity_class'].replace([c], [i], inplace = True)
     
-    # Creating target as a pandas Series of pIC50
-    target = pd.DataFrame({'pIC50': df.pIC50, 'bioactivity_class': df.bioactivity_class, 'standard_value': df.standard_value})
+    # Creating target as a df with all target vars
+    target = pd.DataFrame({'pIC50': df.pIC50, 'standard_value': df.standard_value, 'bioactivity_class': raw_bac, 'encoded_bac': df.bioactivity_class})
     
     # Renaming Name column to molecule_id for clarity
     df.rename(columns = {'Name': 'molecule_id'}, inplace = True)
@@ -67,7 +73,7 @@ class Modeling_class():
             - model_types: List of sklearn models, should be classification or regression models
             - names: Names of regression models
     '''
-    def __init__(self, x_data:pd.DataFrame, y_data: pd.DataFrame, model_types: list, names: list):
+    def __init__(self, x_data:pd.DataFrame, y_data: pd.DataFrame, regressor_types: list, reg_names: list, classifier_types: list, cls_names: list):
         ''' Passes dataframe without target, target series, list of actual regressors and their names, as well as checks 
             Creates a list of tuples of regressors and their names.
 
@@ -80,8 +86,8 @@ class Modeling_class():
             ----------------------------------------------------------------
         '''
         # Creating class instance of df and y_data
-        self.df = x_data.copy(deep = True)
-        self.y_data = y_data.copy(deep = True)
+        self.df = x_data.reset_index(drop = True).copy(deep = True)
+        self.y_data = y_data.reset_index(drop = True).copy(deep = True)
         try: # checking if pIC50 column exists or bioactivity column exists, if they do, raise error
             self.df['pIC50']
             self.df['bioactivity_class']
@@ -90,12 +96,16 @@ class Modeling_class():
             pass
         
         # Creating base class attributes
-        self.model_types = model_types
-        self.names = names
+        self.regressor_types = regressor_types
+        self.reg_names = reg_names
+        self.classifier_types = classifier_types
+        self.cls_names = cls_names
         
-        models = [(model_types[n], names[n]) for n in range(len(names))] # creating tuple list of models and names
-        self.models = models
+        reg_models = [(regressor_types[n], reg_names[n]) for n in range(len(reg_names))] # creating tuple list of models and names
+        self.reg_models = reg_models
 
+        cls_models = [(classifier_types[n], cls_names[n]) for n in range(len(cls_names))] # creating tuple list of models and names
+        self.cls_models = cls_models
         
     def split(self, df: pd.DataFrame, target = None, testsize = .25):
         '''
@@ -145,7 +155,8 @@ class Modeling_class():
         scaled_df = scaler.fit_transform(self.df[['MW','LogP','NumHDonors','NumHAcceptors']])
         scaled_df = pd.DataFrame(scaled_df, columns = ['MW','LogP','NumHDonors','NumHAcceptors'])
 
-        self.scaled_df = pd.concat([scaled_df, self.df.drop(columns = ['MW','LogP','NumHDonors','NumHAcceptors'])], axis = 1).drop(columns = ['molecule_id'])
+        conc_df = pd.concat([scaled_df, self.df.drop(columns = ['MW','LogP','NumHDonors','NumHAcceptors'])], axis = 1).drop(columns = ['molecule_id'])
+        self.scaled_df = conc_df
         return scaled_df
         
     
@@ -201,7 +212,7 @@ class Modeling_class():
         avg_scores_dict = {'model_type': [], 'metric': [], 'avg_score': []}
         
         outputs = [] # init empty output list, contains entire output from cross validation, all models and metrics
-        for (model_type, name) in self.models: # iterate through zipped models
+        for (model_type, name) in self.reg_models: # iterate through zipped models
             model_spec_out = [] # model specific output, refreshes each iteration for use in getting model specific metrics
 
             kfold = KFold(n_splits = splits) # number of kfolds set to splits
@@ -212,9 +223,12 @@ class Modeling_class():
             # Iterate through to get the acutual results for each metric type as well as the average of each metric type, append to respective dicts
             # for each model type in the self.models list
             for metric in metric_types:
-                metric_score = [abs(out[f'test_{metric}']) for out in model_spec_out] # list of all validation scores for this metric for this model iteration
-                avg_result = [abs(np.round(out[f'test_{metric}'], 5)).mean() for out in model_spec_out][0] # Average value of scores for this metric for this df
-                
+                if metric != 'r2':
+                    metric_score = [abs(out[f'test_{metric}']) for out in model_spec_out] # list of all validation scores for this metric for this model iteration
+                    avg_result = [abs(np.round(out[f'test_{metric}'], 5)).mean() for out in model_spec_out][0] # Average value of scores for this metric for this df
+                else:
+                    metric_score = [out[f'test_{metric}'] for out in model_spec_out] # list of all validation scores for this metric for this model iteration
+                    avg_result = [np.round(out[f'test_{metric}'], 5).mean() for out in model_spec_out][0] # Average value of scores for this metric for this df
                 # Appending to average scores dict the name, metric type, and average score
                 avg_scores_dict['model_type'].append(name)
                 avg_scores_dict['metric'].append(metric)
@@ -242,53 +256,105 @@ class Modeling_class():
 
 
         # Creating attribute for metric_df with updated multi-index
-        self.metric_df = pd.DataFrame(data = avg_metric_df.avg_score.values, index = index, columns = ['avg_score'])
+        self.reg_metric_df = pd.DataFrame(data = avg_metric_df.avg_score.values, index = index, columns = ['avg_score'])
 
 
         print('Modeling done! Average scores are abstract represntations of how well this model type did, not actual scores.')
-        return self.metric_df, outputs
+        return self.reg_metric_df
+
+    def plot_actual_vs_pred(self):
+        
+
+        # Baseline creation
+        dr = DummyRegressor(strategy='mean').fit(self.df, self.y_data.pIC50) #Baseline
+        yhat_baseline = self.reg_target.mean()
+
+        # Getting baseline RMSE
+        y_pred_baseline = [yhat_baseline for i in range(len(self.reg_target))]
+        base_rmse = sqrt(mean_squared_error(self.reg_target, y_pred_baseline))
+
+        y_actual = self.reg_target
+
+        # Creating list of tuples for models and scores
+        estimator_scores = {'estimator': [], 'scores': []}
+
+        # Making list of models from models_scores
+        for out in self.model_scores_reg:
+            # Making list of scores from cross_val
+            estimator_scores['scores'].append(out[1]['test_neg_root_mean_squared_error'])
+        
+        for out in self.model_scores_reg:
+            for mdl in out[0]:
+                estimator_scores['estimator'].append(mdl)
+        
+        bestimators = []
+        for scores in estimator_scores['scores']:
+            for i, score in enumerate(scores):
+                if score == max(scores):
+                    bestimators.append(estimator_scores['estimator'][i])
+        
+        yhat_preds = []
+        for estimator in bestimators:
+            yhat_preds.append(estimator.predict(self.df.drop(columns = ['molecule_id'])))
+
+
+        plt.figure(figsize=(16,8))
+        plt.plot(y_actual, y_pred_baseline, alpha=1, color="gray", label='_nolegend_')
+        plt.annotate("Baseline: Predict Using Mean", (16, 9.5))
+        plt.plot(y_actual, y_actual, alpha=1, color="blue", label='actual')
+        plt.annotate("The Ideal Line: Predicted = Actual", (.5, 3.5), rotation=15.5)
+
+        colors = itertools.cycle(cm.rainbow(np.linspace(0, 1, len(self.reg_names))))
+        for i, (estimator, out) in enumerate(self.model_scores_reg):
+            plt.scatter(y_actual, yhat_preds[i],
+                    alpha=.5, color=next(colors), s=100, label=f"Model: {self.reg_names[i]}")
+        
+        plt.legend()
+        plt.xlabel("Actual")
+        plt.ylabel("Predicted")
+        plt.title("Actual vs Predicted")
+        plt.show()
+
 
     def classification_modeling(self, metric_type = 'accuracy', splits = 3):
         ''' Checks for and encodes label column
             Creates a metrics df measuring metric_type, accuracy by default.
             Preforms a kfold a number of times determined by splits.
         '''
-        try: # checking if pIC50 column exists, if not raise KeyError, didnt specify a lang or top_langs
-            self.df['bioactivity_class']
-        except KeyError:
-            return KeyError('Missing bioactivity_class column in your dataframe, make sure you are pulling a dataset with bioactivity_class present.')
-        
+        # Getting regression target
+        target = pd.Series(self.y_data.encoded_bac) # Setting target to pIC50
+        self.classes = target # seting attribute for reg_target
+
+
         try: # Checking if scaling has already run, if yes there will be an attribute scaled df
             self.scaled_df
-            print('Scaling has already been run, moving on to modeling, this may take a while...')
+            print('Scaling has already been run. Moving on to modeling, this may take a while...')
         except AttributeError: # If no scaled_df attribute exists create scaled_df calling self.scaling
             print('Have not run scaling method yet, running now...')
-            self.scaled_df = self.scaling()
+            if scaler_type != None:
+                self.scaling(scaler = scaler_type)
+            else:
+                self.scaling()
             print('All done! Moving on to modeling, this may take a while...')
-        target = (self.df.bioactivity_class) # Setting target to pIC50
-            
         
         X_train, X_test, y_train, y_test = self.split(self.scaled_df, target)
         
         
         result = [] # init empty results list
-        for (classifier, name) in self.models: # iterate through zipped models
+        for (classifier, name) in self.cls_models: # iterate through zipped models
             kfold = KFold(n_splits = splits) # number of kfolds set to splits
             scores = cross_validate(classifier, X_train, y_train, cv = kfold, scoring = metric_type, return_estimator=True) # cross validate on each kfold
             result.append(scores) # append to results
-            
-            msg = "{0}: Validate accuracy: {1}".format(name, scores['test_score'].mean())
-            print(msg)
         
         estimators = [res['estimator'] for res in result] # list comp for estimators/classifiers
         results = [res['test_score'] for res in result] # results of validation scores
         avg_res = [round(res['test_score'].mean(), 4) * 100 for res in result] # list comp to get mean of cross val tests for each model
-        metrics_df = pd.DataFrame(data = zip(self.names, avg_res), columns = ['model', f'average_{metric_type}%']) # wrap zipped model names and results in dataframe
+        metrics_df = pd.DataFrame(data = zip(self.cls_names, avg_res), columns = ['model', f'average_{metric_type}%']) # wrap zipped model names and results in dataframe
         
         model_scores = [(estimators[n], results[n]) for n in range(len(estimators))] # Creating list of tuples for model objects and their scores
         
         # Creating attribute for testing
-        self.model_scores = model_scores
+        self.cls_model_scores = model_scores
         return metrics_df.sort_values(by = [f'average_{metric_type}%'], ascending = False) # return sorted metric df
     
     

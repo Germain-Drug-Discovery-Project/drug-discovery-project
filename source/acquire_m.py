@@ -41,8 +41,8 @@ class wrangle():
         print(f'List of single protein ChEMBL ID\'s from chosen disease:\n{self.disease_df.target_chembl_id}')
         user_target = input('Input a single protein target ID from the list:')
         self.user_target = user_target
-
-
+        
+        
         if os.path.isfile(f'{user_target}_bioactivity_data.csv'):
             df = pd.read_csv(f'{user_target}_bioactivity_data.csv', index_col = 0)
         
@@ -54,10 +54,16 @@ class wrangle():
             
             # Turn the 'activity' list of dictionaries into a pandas dataframe
             df = pd.DataFrame.from_dict(activity)
+
+            try:
+                df.canonical_smiles
+            except AttributeError:
+                raise AttributeError('This chemical does not contain canonical smiles to fingerprint. Please rerun the cell and choose another chemical ID.')
+
             # standard_value column represents potency
             # A smaller number means a smaller dose is needed to exhibit and effect
             # Lower value means more potent, higher value means less potent
-            
+            df = df[~df.canonical_smiles.isna() == True].reset_index()
             # Save a local copy of our bioactivity data
             df.to_csv(f'{user_target}_bioactivity_data.csv', index=False)
         
