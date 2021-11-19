@@ -111,7 +111,7 @@ class wrangle():
         df.to_csv(f'{self.user_target}_bioactivity_preprocessed.csv', index=False)
 
         if tests:
-            print("\nMann-Whitney U tests for molecular descriptors (active vs. inactive)...")
+            print("\nKruskal Wallis H tests for molecular descriptors (active vs. inactive)...")
             for column in ['MW', 'LogP', 'NumHDonors', 'NumHAcceptors']:
                 kruskal_wallace(column, self.prepped_df)
         if fingerprints:

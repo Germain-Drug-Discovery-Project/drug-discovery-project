@@ -228,19 +228,10 @@ class Modeling_class():
         
         estimators = [out['estimator'] for out in outputs] # list comp for estimators/regressors
 
+        model_scores = [(estimators[n], outputs[n]) for n in range(len(estimators))] # Creating list of tuples for model objects and their scores
         
-        # initializing metric_df with just names of model types
-        # metrics_df = pd.DataFrame(columns = ['model_type', metric_types])
-
-        # metrics_df = pd.DataFrame(data =, columns = ['model', f'average_{metric_type}%']) # wrap zipped model names and results in dataframe
-        
-        # metrics_df.append()
-
-        # model_scores = [(estimators[n], outputs[n]) for n in range(len(estimators))] # Creating list of tuples for model objects and their scores
-        
-        # # Creating attribute for testing
-        # self.model_scores = model_scores
-        # return metrics_df.sort_values(by = [f'average_{metric_type}%'], ascending = False) # return sorted metric df
+        # Creating attribute for testing
+        self.model_scores_reg = model_scores
         
         # Creating dataframe from average scores dict
         avg_metric_df = pd.DataFrame.from_dict(avg_scores_dict)
@@ -255,7 +246,7 @@ class Modeling_class():
 
 
         print('Modeling done! Average scores are abstract represntations of how well this model type did, not actual scores.')
-        return self.metric_df, avg_scores_dict, outputs
+        return self.metric_df, outputs
 
     def classification_modeling(self, metric_type = 'accuracy', splits = 3):
         ''' Checks for and encodes label column
