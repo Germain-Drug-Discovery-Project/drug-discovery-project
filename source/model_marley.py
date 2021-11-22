@@ -262,9 +262,11 @@ class Modeling_class():
         print('Modeling done! Average scores are abstract represntations of how well this model type did, not actual scores.')
         return self.reg_metric_df
 
-    def plot_actual_vs_pred(self):
-        
-
+    def evaluaton_helpers(self):
+        ''' A helper function that gets the best estimators per model type from regression cross-validation,
+            the score that corresponds to that estimator, and returns the bestimators predictions for use 
+            in plotting error visualizations.
+        '''
         # Baseline creation
         dr = DummyRegressor(strategy='mean').fit(self.df, self.y_data.pIC50) #Baseline
         yhat_baseline = self.reg_target.mean()
@@ -283,36 +285,76 @@ class Modeling_class():
             # Making list of scores from cross_val
             estimator_scores['scores'].append(out[1]['test_neg_root_mean_squared_error'])
         
+        # Getting the estimators from the model scores gegression dictionary
         for out in self.model_scores_reg:
             for mdl in out[0]:
                 estimator_scores['estimator'].append(mdl)
         
-        bestimators = []
-        for scores in estimator_scores['scores']:
+        # Getting list of best estimators for each model type by grabbing best score for each model type
+        bestimators = [] # empty list of best estimator for each model type
+        for j, scores in enumerate(estimator_scores['scores']):
             for i, score in enumerate(scores):
                 if score == max(scores):
-                    bestimators.append(estimator_scores['estimator'][i])
-        
+                    bestimators.append(estimator_scores['estimator'][i+3*j])
+
+        # Making a list of predictions from the bestimators for each model type
         yhat_preds = []
         for estimator in bestimators:
             yhat_preds.append(estimator.predict(self.df.drop(columns = ['molecule_id'])))
 
 
-        plt.figure(figsize=(16,8))
-        plt.plot(y_actual, y_pred_baseline, alpha=1, color="gray", label='_nolegend_')
-        plt.annotate("Baseline: Predict Using Mean", (16, 9.5))
-        plt.plot(y_actual, y_actual, alpha=1, color="blue", label='actual')
-        plt.annotate("The Ideal Line: Predicted = Actual", (.5, 3.5), rotation=15.5)
+        # Initialize helper attributes
+        self.yhat_preds = yhat_preds
+        self.bestimators = bestimators
+        self.y_actual = y_actual
+        self.y_pred_baseline = y_pred_baseline
+        self.yhat_baseline = yhat_baseline
+        self.baseline_rmse = base_rmse
+
+        
+    def plot_actual_vs_pred(self):
+        ''' Plots the acutal values vs the predicted values 
+        '''
+
+        self.evaluaton_helpers()
+
+        # Baseline and line 
+        fig = plt.figure(figsize=(16,8))
+        ax = fig.add_subplot(111)
+        
+        plt.plot(self.y_actual, self.y_pred_baseline, alpha=1, color="gray", label='predicted')
+        plt.annotate("Baseline: Predict Using Mean", (2, 5))
+        plt.plot(self.y_actual, self.y_actual, alpha=1, color="blue", label='actual')
+        plt.annotate("The Ideal Line: Predicted = Actual", (1, .8), rotation=25.8)
 
         colors = itertools.cycle(cm.rainbow(np.linspace(0, 1, len(self.reg_names))))
         for i, (estimator, out) in enumerate(self.model_scores_reg):
-            plt.scatter(y_actual, yhat_preds[i],
+            ax.scatter(self.y_actual, self.yhat_preds[i],
                     alpha=.5, color=next(colors), s=100, label=f"Model: {self.reg_names[i]}")
-        
+
         plt.legend()
         plt.xlabel("Actual")
         plt.ylabel("Predicted")
         plt.title("Actual vs Predicted")
+        plt.show()
+
+
+    def plot_errors(self):
+        
+        self.evaluaton_helpers()
+
+        fig = plt.figure(figsize=(16,8))
+        ax = fig.add_subplot(111)
+        plt.axhline(label="No Error")
+
+        colors = itertools.cycle(cm.rainbow(np.linspace(0, 1, len(self.reg_names))))
+        for i, (estimator, out) in enumerate(self.model_scores_reg):
+            plt.scatter(self.y_actual, (self.yhat_preds[i] - self.y_actual),
+                    alpha=.5, color=next(colors), s=100, label=f"Model: {self.reg_names[i]}")
+        plt.legend()
+        plt.xlabel("Actual")
+        plt.ylabel("Residual/Error: Predicted - Actual")
+        plt.title("Plotting Errors in Predictions")
         plt.show()
 
 
