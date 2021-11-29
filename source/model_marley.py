@@ -345,9 +345,7 @@ class Modeling_class():
         ax = fig.add_subplot(111)
         
         plt.plot(self.y_actual, self.y_pred_baseline, alpha=1, color="gray", label='predicted')
-        plt.annotate("Baseline: Predict Using Mean", (2, 5))
         plt.plot(self.y_actual, self.y_actual, alpha=1, color="blue", label='actual')
-        plt.annotate("The Ideal Line: Predicted = Actual", (1, .8), rotation=25.8)
 
         colors = itertools.cycle(cm.rainbow(np.linspace(0, 1, len(self.reg_names))))
         for i, (estimator, out) in enumerate(self.model_scores_reg):
@@ -445,7 +443,7 @@ class Modeling_class():
         for tup in bestimator_scores:
             if tup[1] == max(self.bestscores):
                 mdl = (tup[0])
-                print(f'Metric used: {metric}\nBest model: {tup[0]}\nValidate score: {tup[1]}\nTest Score: {mdl.score(self.X_test, self.y_test)}')
+                print(f'Metric used: {metric}\nBest model: {tup[0]}\nValidate score: {tup[1]}\nTest R-squared Score: {mdl.score(self.X_test, self.y_test)}')
                 return mdl
     
     def cls_test(self):
