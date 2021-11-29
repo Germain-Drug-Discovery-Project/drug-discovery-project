@@ -224,8 +224,8 @@ class Modeling_class():
             # for each model type in the self.models list
             for metric in metric_types:
                 if metric != 'r2':
-                    metric_score = [abs(out[f'test_{metric}']) for out in model_spec_out] # list of all validation scores for this metric for this model iteration
-                    avg_result = [abs(np.round(out[f'test_{metric}'], 5)).mean() for out in model_spec_out][0] # Average value of scores for this metric for this df
+                    metric_score = [out[f'test_{metric}'] for out in model_spec_out] # list of all validation scores for this metric for this model iteration
+                    avg_result = [np.round(out[f'test_{metric}'], 5).mean() for out in model_spec_out][0] # Average value of scores for this metric for this df
                 else:
                     metric_score = [out[f'test_{metric}'] for out in model_spec_out] # list of all validation scores for this metric for this model iteration
                     avg_result = [np.round(out[f'test_{metric}'], 5).mean() for out in model_spec_out][0] # Average value of scores for this metric for this df
@@ -262,7 +262,7 @@ class Modeling_class():
         print('Modeling done! Average scores are abstract represntations of how well this model type did, not actual scores.')
         return self.reg_metric_df
 
-    def evaluaton_helpers(self):
+    def evaluaton_helpers(self, metric):
         ''' A helper function that gets the best estimators per model type from regression cross-validation,
             the score that corresponds to that estimator, and returns the bestimators predictions for use 
             in plotting error visualizations.
@@ -283,7 +283,7 @@ class Modeling_class():
         # Making list of models from models_scores
         for out in self.model_scores_reg:
             # Making list of scores from cross_val
-            estimator_scores['scores'].append(out[1]['test_neg_root_mean_squared_error'])
+            estimator_scores['scores'].append(out[1][f'{metric}'])
         
         # Getting the estimators from the model scores gegression dictionary
         for out in self.model_scores_reg:
@@ -292,9 +292,11 @@ class Modeling_class():
         
         # Getting list of best estimators for each model type by grabbing best score for each model type
         bestimators = [] # empty list of best estimator for each model type
+        bestscores = [] # empty list with best scores for each model type
         for j, scores in enumerate(estimator_scores['scores']):
             for i, score in enumerate(scores):
                 if score == max(scores):
+                    bestscores.append(score)
                     bestimators.append(estimator_scores['estimator'][i+3*j])
 
         # Making a list of predictions from the bestimators for each model type
@@ -310,6 +312,7 @@ class Modeling_class():
         self.y_pred_baseline = y_pred_baseline
         self.yhat_baseline = yhat_baseline
         self.baseline_rmse = base_rmse
+        self.bestscores = bestscores
 
         
     def plot_actual_vs_pred(self):
@@ -396,22 +399,57 @@ class Modeling_class():
         model_scores = [(estimators[n], results[n]) for n in range(len(estimators))] # Creating list of tuples for model objects and their scores
         
         # Creating attribute for testing
-        self.cls_model_scores = model_scores
+        self.model_scores_cls = model_scores
         return metrics_df.sort_values(by = [f'average_{metric_type}%'], ascending = False) # return sorted metric df
     
-    
-    def test_on_best(self):
+    def reg_test(self, metric):
         ''' Gets best preforming model from a list of estimators garnered from cross validation
             and tests model accuracy on Test dataset provided as an arg. Returns model.
         '''
+        # Checking if regression models have been created
+        try:
+            self.model_scores_reg
+        except AttributeError:
+            print('Have not run regression modeling, running now with default parameters...')
+            self.regression_modeling()
+        
+        # Checking for if eval helpers has been run
+        try:
+            self.bestimators
+        except AttributeError:
+            self.evaluaton_helpers(metric)
+        
+        # Creating list of tuples for best models and scores for each regressor type
+        bestimator_scores = [(self.bestimators[n], self.bestscores[n]) for n in range(len(self.bestscores))]
+
+        # Getting best model and score on test
+        for tup in bestimator_scores:
+            if tup[1] == max(self.bestscores):
+                mdl = (tup[0])
+                print(f'Metric used: {metric}\nBest model: {tup[0]}\nValidate score: {tup[1]}\nTest Score: {mdl.score(self.X_test, self.y_test)}')
+                return mdl
+    
+    def cls_test(self):
+        ''' Gets best preforming model from a list of estimators garnered from cross validation
+            and tests model accuracy on Test dataset provided as an arg. Returns model.
+        '''
+
+        # Checking if classification models have been created
+        try:
+            self.model_scores_cls
+        except AttributeError:
+            print('Have not run classification modeling, runninf now with default parameters...')
+            self.classification_modeling()
+
+
         # Making list of models from models_scores
         models = []
-        for m in self.model_scores:
+        for m in self.cls_model_scores:
             for mdl in m[0]:
                 models.append(mdl)
         # Making list of scores from cross_val
         scores = []
-        for m in self.model_scores:
+        for m in self.cls_model_scores:
             for score in m[1]:
                 scores.append(score)
         
