@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.feature_selection import VarianceThreshold
-from sklearn.dummy import DummyRegressor
+from sklearn.dummy import DummyRegressor, DummyClassifier
 from sklearn.model_selection import KFold, cross_validate
 
 from math import sqrt
@@ -258,17 +258,29 @@ class Modeling_class():
         # Creating attribute for metric_df with updated multi-index
         self.reg_metric_df = pd.DataFrame(data = avg_metric_df.avg_score.values, index = index, columns = ['avg_score'])
 
-
+        self.evaluaton_helpers()
         print('Modeling done! Average scores are abstract represntations of how well this model type did, not actual scores.')
         return self.reg_metric_df
 
-    def evaluaton_helpers(self, metric):
+
+    def evaluaton_helpers(self, metric = 'neg_root_mean_squared_error'):
         ''' A helper function that gets the best estimators per model type from regression cross-validation,
             the score that corresponds to that estimator, and returns the bestimators predictions for use 
             in plotting error visualizations.
         '''
-        # Baseline creation
-        dr = DummyRegressor(strategy='mean').fit(self.df, self.y_data.pIC50) #Baseline
+        # Check creation of regression attributs
+        try:
+            self.reg_target
+        except AttributeError:
+            print('Have not run regression modeling yet, runnning now with default attributes...')
+            self.regression_modeling()
+        
+        
+        # Creating baseline dummy regressors
+        dr = DummyRegressor(strategy='mean').fit(self.df, self.y_data.pIC50) # regression baseline
+        dc = DummyClassifier(strategy='most_frequent').fit(self.df, self.y_data.encoded_bac) # classification baseline
+        
+        # Helper yhat baseline
         yhat_baseline = self.reg_target.mean()
 
         # Getting baseline RMSE
@@ -283,7 +295,7 @@ class Modeling_class():
         # Making list of models from models_scores
         for out in self.model_scores_reg:
             # Making list of scores from cross_val
-            estimator_scores['scores'].append(out[1][f'{metric}'])
+            estimator_scores['scores'].append(out[1][f'test_{metric}'])
         
         # Getting the estimators from the model scores gegression dictionary
         for out in self.model_scores_reg:
@@ -313,6 +325,13 @@ class Modeling_class():
         self.yhat_baseline = yhat_baseline
         self.baseline_rmse = base_rmse
         self.bestscores = bestscores
+
+        # Baseline attribute creation
+        rmse = sqrt(mean_squared_error(self.y_data.pIC50, y_pred_baseline))
+        self.reg_baseline_r2 = round(dr.score(self.df, self.y_data.pIC50),3)
+        self.reg_baseline_nrmse = round(rmse, 3)
+
+        self.cls_baseline_acc = round(dc.score(self.df, self.y_data.encoded_bac),3) * 100
 
         
     def plot_actual_vs_pred(self):
@@ -402,7 +421,7 @@ class Modeling_class():
         self.model_scores_cls = model_scores
         return metrics_df.sort_values(by = [f'average_{metric_type}%'], ascending = False) # return sorted metric df
     
-    def reg_test(self, metric):
+    def reg_test(self, metric = 'neg_root_mean_squared_error'):
         ''' Gets best preforming model from a list of estimators garnered from cross validation
             and tests model accuracy on Test dataset provided as an arg. Returns model.
         '''
@@ -444,12 +463,12 @@ class Modeling_class():
 
         # Making list of models from models_scores
         models = []
-        for m in self.cls_model_scores:
+        for m in self.model_scores_cls:
             for mdl in m[0]:
                 models.append(mdl)
         # Making list of scores from cross_val
         scores = []
-        for m in self.cls_model_scores:
+        for m in self.model_scores_cls:
             for score in m[1]:
                 scores.append(score)
         
